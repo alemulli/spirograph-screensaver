@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - run: dotnet build -c Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Spirograph.scr
+          path: bin/Release/net48/Spirograph.scr
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: gh release create ${{ github.ref_name }} bin/Release/net48/Spirograph.scr --title "Spirograph ${{ github.ref_name }}" --notes "Download Spirograph.scr below. Install steps are in the README."
+        env:
+          GH_TOKEN: ${{ github.token }}
